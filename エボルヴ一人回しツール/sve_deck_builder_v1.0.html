@@ -1,0 +1,2623 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shadowverse EVOLVE デッキ作成ツール v2.19</title>
+<style>
+:root {
+  --bg:#060914;
+  --panel:#11182b;
+  --panel2:#0b1222;
+  --line:rgba(145,190,255,.25);
+  --txt:#f2f7ff;
+  --muted:#9fb0cf;
+  --acc:#67d9ff;
+  --danger:#ff6376;
+  --ok:#9bf2c1;
+  --warn:#ffd86a;
+  --slot:#091223;
+  --gold:#f2c76b;
+}
+
+* {
+  box-sizing:border-box;
+}
+
+html,
+body {
+  min-height:100%;
+}
+
+body {
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--txt);
+  background:
+    radial-gradient(circle at 20% -5%,rgba(77,147,255,.38),transparent 34%),
+    radial-gradient(circle at 82% 5%,rgba(145,80,255,.28),transparent 30%),
+    linear-gradient(180deg,#071020 0%,#080913 48%,#05060c 100%);
+}
+
+button,
+input,
+select {
+  font:inherit;
+}
+
+button {
+  appearance:none;
+  border:0;
+  border-radius:999px;
+  background:linear-gradient(180deg,#94eeff,#3dbde6);
+  color:#07111d;
+  font-weight:900;
+  padding:8px 13px;
+  cursor:pointer;
+  box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 8px 18px rgba(45,168,221,.23);
+  transition:transform .08s ease,filter .08s ease;
+}
+
+button:hover {
+  filter:brightness(1.08);
+}
+
+button:active {
+  transform:translateY(1px);
+}
+
+button.secondary {
+  background:linear-gradient(180deg,#33466d,#1b2947);
+  color:#f4f8ff;
+}
+
+button.danger {
+  background:linear-gradient(180deg,#ff8aa0,#b32d46);
+  color:white;
+}
+
+button.ghost {
+  background:rgba(255,255,255,.08);
+  color:#eaf2ff;
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:none;
+}
+
+input,
+select {
+  width:100%;
+  border-radius:10px;
+  border:1px solid #43536d;
+  background:#09101b;
+  color:#fff;
+  padding:9px 10px;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.25);
+}
+
+input[type="file"] {
+  display:none;
+}
+
+header {
+  max-width:1580px;
+  margin:auto;
+  padding:22px 16px 6px;
+}
+
+h1 {
+  margin:0 0 6px;
+  font-size:clamp(22px,3.2vw,34px);
+  letter-spacing:.02em;
+  text-shadow:0 0 22px rgba(103,217,255,.38),0 2px 0 rgba(0,0,0,.75);
+}
+
+.title-note {
+  display:inline-block;
+  margin-left:.65em;
+  font-size:clamp(11px,1.2vw,13px);
+  font-weight:700;
+  color:var(--muted);
+  text-shadow:none;
+  vertical-align:middle;
+}
+
+@media (max-width:700px) {
+  .title-note {
+    display:block;
+    margin:.25em 0 0;
+  }
+}
+
+p {
+  color:var(--muted);
+  line-height:1.65;
+}
+
+.wrap {
+  max-width:1580px;
+  margin:auto;
+  padding:12px 16px 42px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 320px;
+  gap:14px;
+}
+
+.deck-layout {
+  display:grid;
+  gap:14px;
+}
+
+.panel,
+.deck-zone,
+.info-panel,
+.storage-panel,
+.modal-panel {
+  background:linear-gradient(180deg,rgba(21,34,64,.94),rgba(7,13,28,.96));
+  border:1px solid rgba(128,185,255,.25);
+  border-radius:20px;
+  box-shadow:0 22px 55px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+.panel,
+.info-panel,
+.storage-panel {
+  padding:13px;
+}
+
+.top-actions {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.deck-zone {
+  padding:12px;
+  min-height:190px;
+}
+
+.zone-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.zone-title {
+  margin:0;
+  font-size:17px;
+  color:#e7f1ff;
+  text-shadow:0 0 14px rgba(103,217,255,.24);
+}
+
+.zone-meta {
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  justify-content:flex-end;
+}
+
+.badge {
+  background:#26324a;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:12px;
+  font-weight:900;
+  color:#dcecff;
+}
+
+.badge.ok {
+  color:var(--ok);
+}
+
+.badge.warn {
+  color:var(--warn);
+}
+
+.badge.bad {
+  color:var(--danger);
+}
+
+.drop-area {
+  min-height:128px;
+  border:1px dashed rgba(145,190,255,.35);
+  border-radius:16px;
+  background:linear-gradient(180deg,rgba(12,28,55,.54),rgba(4,9,19,.62));
+  padding:10px;
+  transition:border-color .12s ease,box-shadow .12s ease,background .12s ease;
+}
+
+.drop-area.drag-over,
+.class-tile.drag-over,
+.storage-modal-drop.drag-over {
+  border-color:var(--acc);
+  background:rgba(103,217,255,.08);
+  box-shadow:0 0 28px rgba(103,217,255,.28), inset 0 0 24px rgba(103,217,255,.08);
+}
+
+.drop-empty {
+  min-height:106px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  color:#8ea3c6;
+  font-weight:900;
+  letter-spacing:.05em;
+}
+
+.card-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
+  gap:10px;
+}
+
+.deck-card {
+  background:#090e18;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 10px 24px rgba(0,0,0,.34),0 0 0 1px rgba(103,217,255,.08);
+  min-width:0;
+}
+
+.deck-card.dragging {
+  opacity:.45;
+}
+
+.deck-card img {
+  width:100%;
+  display:block;
+  background:#050811;
+}
+
+.source-badge {
+  display:inline-block;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  color:#b7c7e6;
+  font-size:10px;
+  font-weight:900;
+  padding:3px 7px;
+}
+
+.card-body {
+  padding:7px;
+  display:grid;
+  gap:6px;
+}
+
+.card-name-input {
+  padding:7px;
+  font-size:12px;
+  border-radius:8px;
+}
+
+.count-row {
+  display:grid;
+  grid-template-columns:34px 1fr 34px;
+  gap:5px;
+  align-items:center;
+}
+
+.count-row button {
+  border-radius:9px;
+  padding:6px 0;
+  margin:0;
+}
+
+.count-num {
+  text-align:center;
+  font-weight:900;
+  color:#fff;
+  background:#111a2b;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:9px;
+  padding:5px 0;
+}
+
+.info-panel {
+  display:grid;
+  gap:11px;
+  align-self:start;
+  position:sticky;
+  top:12px;
+}
+
+.info-panel h2,
+.storage-panel h2 {
+  font-size:17px;
+  margin:0;
+}
+
+.info-block {
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(7,20,32,.7);
+  border-radius:14px;
+  padding:10px;
+  display:grid;
+  gap:8px;
+}
+
+.info-block label {
+  display:grid;
+  gap:5px;
+  color:#dcecff;
+  font-size:12px;
+  font-weight:900;
+}
+
+.save-actions {
+  display:grid;
+  gap:7px;
+}
+
+.save-actions button,
+.save-actions label.button-like {
+  width:100%;
+  text-align:center;
+  border-radius:10px;
+  margin:0;
+  padding:9px;
+}
+
+.primary-save-actions {
+  border-color:rgba(103,217,255,.42);
+  background:linear-gradient(180deg,rgba(12,46,78,.86),rgba(5,14,28,.86));
+  box-shadow:0 0 24px rgba(103,217,255,.12) inset;
+}
+
+.primary-save-actions button,
+.primary-save-actions .button-like {
+  min-height:42px;
+  font-size:14px;
+}
+
+.button-like {
+  display:block;
+  appearance:none;
+  border:0;
+  background:linear-gradient(180deg,#33466d,#1b2947);
+  color:#f4f8ff;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 8px 18px rgba(45,168,221,.13);
+}
+
+.hint {
+  background:#101827;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:9px;
+  color:#bfcee4;
+  font-size:12px;
+  line-height:1.55;
+}
+
+.storage-panel {
+  display:grid;
+  gap:10px;
+}
+
+.storage-top {
+  display:grid;
+  gap:8px;
+}
+
+.class-tile-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+.class-tile {
+  min-height:62px;
+  border:1px dashed rgba(145,190,255,.22);
+  border-radius:16px;
+  background:rgba(7,16,31,.58);
+  display:grid;
+  place-items:center;
+  text-align:center;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+  padding:10px;
+  transition:border-color .12s ease,box-shadow .12s ease,background .12s ease;
+}
+
+.class-tile:hover {
+  border-color:rgba(103,217,255,.5);
+  background:rgba(103,217,255,.08);
+}
+
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:50;
+}
+
+.modal.open {
+  display:flex;
+}
+
+.modal-panel {
+  width:min(920px,96vw);
+  max-height:88vh;
+  overflow:auto;
+  padding:14px;
+}
+
+.modal-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.modal-head h2 {
+  margin:0;
+}
+
+.storage-modal-tools {
+  display:grid;
+  grid-template-columns:minmax(140px,1fr) auto;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.storage-modal-drop {
+  min-height:48px;
+  border:1px dashed rgba(145,190,255,.28);
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  color:#8ea3c6;
+  font-size:12px;
+  font-weight:900;
+  padding:8px;
+  margin-bottom:10px;
+  background:rgba(7,16,31,.58);
+}
+
+.storage-card-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(86px,1fr));
+  gap:8px;
+}
+
+.storage-card {
+  display:grid;
+  gap:4px;
+  background:#090e18;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:10px;
+  padding:5px;
+  cursor:grab;
+}
+
+.storage-card:active {
+  cursor:grabbing;
+}
+
+.storage-card img {
+  width:100%;
+  border-radius:7px;
+  display:block;
+  background:#050811;
+}
+
+.storage-card strong {
+  font-size:10px;
+  line-height:1.25;
+  min-height:2.5em;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.storage-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:3px;
+}
+
+.storage-actions button {
+  margin:0;
+  border-radius:7px;
+  padding:4px 2px;
+  font-size:9px;
+}
+
+.storage-empty {
+  color:#8ea3c6;
+  font-size:12px;
+  line-height:1.5;
+  padding:10px;
+}
+
+.edit-grid {
+  display:grid;
+  gap:10px;
+}
+
+.edit-preview {
+  max-width:180px;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.16);
+  background:#050811;
+}
+
+.edit-preview img {
+  display:block;
+  width:100%;
+}
+
+.dialog-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.dialog-actions button {
+  border-radius:10px;
+  margin:0;
+}
+
+.mobile-info-toggle {
+  display:none;
+}
+
+
+/* v2.04 sortable cards */
+
+.deck-card.drop-before,
+.storage-card.drop-before {
+  outline:2px solid var(--acc);
+  box-shadow:0 0 22px rgba(103,217,255,.34);
+}
+
+.storage-card.dragging {
+  opacity:.45;
+}
+
+
+@media (min-width:1400px) {
+  .class-tile-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media (max-width:1160px) {
+  .wrap {
+    grid-template-columns:1fr;
+  }
+
+  .info-panel {
+    position:static;
+  }
+
+  .class-tile-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width:700px) {
+  .storage-modal-tools {
+    grid-template-columns:1fr;
+  }
+
+  .class-tile-grid {
+    grid-template-columns:1fr;
+  }
+
+  .info-panel {
+    position:sticky;
+    top:0;
+    z-index:40;
+    border-radius:0 0 18px 18px;
+    margin:-12px -10px 0;
+  }
+
+  .info-panel.collapsed .info-block,
+  .info-panel.collapsed .hint {
+    display:none;
+  }
+
+  .info-panel.collapsed .info-block:first-of-type {
+    display:grid;
+    padding:8px 10px;
+  }
+
+  .info-panel.collapsed .info-block:first-of-type label,
+  .info-panel.collapsed .info-block:first-of-type .save-actions-inline {
+    display:none;
+  }
+
+  .info-panel.collapsed h2 {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+
+  .mobile-info-toggle {
+    display:inline-grid;
+    place-items:center;
+    min-width:72px;
+    border-radius:999px;
+    padding:5px 9px;
+    font-size:11px;
+  }
+}
+
+@media (max-width:640px) {
+  header {
+    padding-top:16px;
+  }
+
+  .wrap {
+    padding-inline:10px;
+  }
+
+  .zone-head,
+  .modal-head {
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .zone-meta {
+    justify-content:flex-start;
+  }
+
+  .card-grid {
+    grid-template-columns:repeat(auto-fill,minmax(116px,1fr));
+  }
+
+  .storage-card-grid {
+    grid-template-columns:repeat(auto-fill,minmax(72px,1fr));
+  }
+}
+/* v2.09 deck list and startup flow */
+
+.storage-file-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+}
+
+.storage-file-actions button,
+.storage-file-actions .button-like {
+  width:100%;
+  text-align:center;
+  border-radius:10px;
+  margin:0;
+  padding:9px;
+}
+
+.deck-list-toolbar {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.deck-list-toolbar button,
+.deck-list-toolbar .button-like {
+  border-radius:10px;
+  margin:0;
+}
+
+.deck-list-items {
+  display:grid;
+  gap:8px;
+}
+
+.deck-list-item {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:start;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  background:#09101b;
+  padding:10px;
+}
+
+
+.deck-list-item strong {
+  display:block;
+  color:#fff;
+  line-height:1.35;
+}
+
+.deck-list-item small {
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  margin-top:3px;
+}
+
+.deck-list-actions {
+  display:grid;
+  grid-template-columns:repeat(3,auto);
+  gap:5px;
+}
+
+.deck-list-actions button {
+  border-radius:8px;
+  margin:0;
+  padding:6px 8px;
+  font-size:11px;
+}
+
+.startup-panel {
+  width:min(560px,94vw);
+  text-align:center;
+}
+
+.startup-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:16px;
+}
+
+.startup-actions button,
+.startup-actions .button-like {
+  border-radius:12px;
+  min-height:46px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+}
+
+@media (max-width:700px) {
+  .wrap {
+    display:flex;
+    flex-direction:column;
+  }
+
+  .info-panel {
+    order:-1;
+  }
+
+  .deck-list-actions {
+    grid-template-columns:1fr 1fr;
+  }
+
+  .deck-list-item {
+    grid-template-columns:1fr;
+  }
+
+  .startup-actions,
+  .storage-file-actions {
+    grid-template-columns:1fr;
+  }
+}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Shadowverse EVOLVE デッキ作成ツール v2.19 <span class="title-note">※このツールは非公式のファン制作ツールです。</span></h1>
+  <p>一人回しツールのセーブデータを読み込み、編集して全デッキリストとして書き出します。編集後は、書き出したセーブデータを一人回しツールで読み込んでご利用ください。セーブデータがない場合は読み込みをスキップできます。なお、カードストレージの内容はデッキビルダー固有のデータです。</p>
+</header>
+
+<main class="wrap">
+  <section class="deck-layout">
+    <div class="panel">
+      <div class="hint">一人回しツールで読み込んだデッキに、自分で用意した画像を加えてデッキを作れます。imagesフォルダに保存した画像をドラッグ&ドロップして追加してください。ローカル画像をドラッグ&ドロップして追加できます。一人回しツールで画像を表示するため、使用する画像は images フォルダに保存し、ファイル名をカード名と一致させてください。</div>
+    </div>
+
+    <section class="deck-zone" data-zone="main">
+      <div class="zone-head">
+        <h2 class="zone-title">メインデッキ</h2>
+        <div class="zone-meta">
+          <span class="badge" id="mainCountBadge">0 / 40〜50</span>
+          <span class="badge" id="mainStatusBadge">不足</span>
+        </div>
+      </div>
+      <div class="drop-area" data-drop-zone="main">
+        <div class="drop-empty" id="mainEmpty">ローカル画像をドラッグ&ドロップ</div>
+        <div class="card-grid" id="mainGrid"></div>
+      </div>
+    </section>
+
+    <section class="deck-zone" data-zone="evolve">
+      <div class="zone-head">
+        <h2 class="zone-title">エボルヴデッキ</h2>
+        <div class="zone-meta">
+          <span class="badge" id="evolveCountBadge">0 / 0〜10</span>
+          <span class="badge ok" id="evolveStatusBadge">OK</span>
+        </div>
+      </div>
+      <div class="drop-area" data-drop-zone="evolve">
+        <div class="drop-empty" id="evolveEmpty">ローカル画像をドラッグ&ドロップ</div>
+        <div class="card-grid" id="evolveGrid"></div>
+      </div>
+    </section>
+
+    <section class="deck-zone" data-zone="other">
+      <div class="zone-head">
+        <h2 class="zone-title">その他カード</h2>
+        <div class="zone-meta">
+          <span class="badge" id="otherCountBadge">0 種</span>
+          <span class="badge ok">枚数制限なし</span>
+        </div>
+      </div>
+      <div class="drop-area" data-drop-zone="other">
+        <div class="drop-empty" id="otherEmpty">ローカル画像をドラッグ&ドロップ</div>
+        <div class="card-grid" id="otherGrid"></div>
+      </div>
+    </section>
+
+    <section class="storage-panel">
+      <div class="storage-top">
+        <h2>カードストレージ</h2>
+        <div class="hint">クラス名をクリックしてモーダルで開きます。クラス枠へ画像・公式カードリスト画像・デッキカードをドロップして保存できます。ストレージカードはドラッグで並べ替え、右クリックで編集できます。</div>
+        <div class="storage-file-actions">
+          <button type="button" class="secondary" id="exportStorageBtn">ストレージを保存</button>
+          <label class="button-like" for="importStorageInput">ストレージを読み込み</label>
+          <input id="importStorageInput" type="file" accept="application/json,.json">
+        </div>
+        <div class="hint">読み込み時は現在のストレージを消さず、未登録カードだけを追加します。</div>
+      </div>
+      <div class="class-tile-grid" id="classTileGrid"></div>
+    </section>
+  </section>
+
+  <aside class="info-panel" id="infoPanel">
+    <h2>デッキ情報 <button type="button" class="secondary mobile-info-toggle" id="infoToggleBtn">展開</button></h2>
+
+    <div class="info-block">
+      <label>デッキ名
+        <input id="deckTitleInput" type="text" placeholder="例：簒奪ロイ">
+      </label>
+      <div class="save-actions primary-save-actions save-actions-inline">
+        <button type="button" id="openDeckListBtn">デッキ一覧を開く</button>
+        <label class="button-like" for="importDeckInput">デッキリスト読み込み</label>
+        <input id="importDeckInput" type="file" accept="application/json,.json">
+        <button type="button" id="exportSoloDeckBtn">全デッキリストを書き出し</button>
+      </div>
+    </div>
+
+
+    <div class="info-block save-actions">
+      <label>ブックマークレットHTMLから新規作成
+        <textarea id="bookmarkletHtmlInput" placeholder="ブックマークレットで取得したdeckview HTMLをここに貼り付け"></textarea>
+      </label>
+      <button type="button" class="secondary" id="importBookmarkletHtmlBtn">貼り付けHTMLをデッキ化</button>
+      <div class="hint">デッキリストを読み込んだ後に使うと、既存デッキリストへ新規デッキとして追加して保存できます。</div>
+    </div>
+
+    <div class="hint">
+      読み込み・保存の正本は一人回しツールの「セーブデータを書き出し」で作ったJSONです。デッキリストを読み込んだ場合、保存時は全保存デッキを保持し、編集中のデッキだけ差し替えます。
+    </div>
+  </aside>
+</main>
+
+
+<div class="modal open" id="startupModal" aria-hidden="false">
+  <div class="modal-panel startup-panel">
+    <h2>デッキ作成ツールを開始</h2>
+    <p>一人回しツールのセーブデータを読み込むと、保存済みデッキ一覧から編集を始められます。スキップすると空の新規デッキから始めます。</p>
+    <div class="startup-actions">
+      <label class="button-like" for="startupImportInput">セーブデータを読み込む</label>
+      <input id="startupImportInput" type="file" accept="application/json,.json">
+      <button type="button" class="secondary" id="skipStartupBtn">スキップ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="deckListModal" aria-hidden="true">
+  <div class="modal-panel" style="width:min(980px,96vw)">
+    <div class="modal-head">
+      <h2>デッキ一覧</h2>
+      <button type="button" class="secondary" id="closeDeckListBtn">閉じる</button>
+    </div>
+    <div class="deck-list-toolbar">
+      <button type="button" id="createDeckFromListBtn">新規デッキ作成</button>
+      <button type="button" id="saveCurrentDeckBtn">現在のデッキを保存</button>
+    </div>
+    <div class="hint">「現在のデッキを保存」で編集中のデッキをデッキリストへ保存します。名前変更・複製・削除もこの一覧から行います。</div>
+    <div class="deck-list-items" id="deckListItems"></div>
+  </div>
+</div>
+
+<div class="modal" id="storageModal" aria-hidden="true">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h2 id="storageModalTitle">カードストレージ</h2>
+      <button type="button" class="secondary" id="closeStorageBtn">閉じる</button>
+    </div>
+    <div class="storage-modal-tools">
+      <input type="search" id="storageSearchInput" placeholder="カード名検索">
+      <button type="button" id="saveDeckToCurrentClassBtn">現在のデッキをこのクラスへ保存</button>
+    </div>
+    <div class="storage-modal-drop" id="storageModalDrop">ローカル画像・公式カードリスト画像・デッキカードをここへドラッグ&ドロップ</div>
+    <div class="storage-card-grid" id="storageCardGrid"></div>
+  </div>
+</div>
+
+<div class="modal" id="editModal" aria-hidden="true">
+  <div class="modal-panel" style="width:min(520px,96vw)">
+    <div class="modal-head">
+      <h2 id="editTitle">カード編集</h2>
+      <button type="button" class="secondary" id="closeEditBtn">閉じる</button>
+    </div>
+    <div class="edit-grid">
+      <div class="edit-preview"><img id="editPreviewImg" alt=""></div>
+      <label>カード名
+        <input id="editNameInput" type="text">
+      </label>
+      <label id="editClassLabel">クラス
+        <select id="editClassSelect"></select>
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="danger" id="deleteEditingCardBtn">削除</button>
+      <button type="button" id="saveEditingCardBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const STORAGE_CLASSES = ["エルフ","ロイヤル","ウィッチ","ドラゴン","ナイトメア","ビショップ","ニュートラル"];
+  const IMAGE_WIDTH = 459;
+  const IMAGE_HEIGHT = 641;
+  const ZONES = ["main","evolve","other"];
+  const BUILDER_SCHEMA = "sve-deck-builder";
+  const SOLO_BACKUP_VERSION = "sve-solo-save-v1";
+
+  const state = {
+    deck:{
+      main:[],
+      evolve:[],
+      other:[]
+    },
+    storage:Object.fromEntries(STORAGE_CLASSES.map(className => [className, []])),
+    editing:null,
+    dragging:null,
+    activeStorageClass:null,
+    soloBackup:{
+      baseData:null,
+      savedDecks:{},
+      selectedDeckName:"",
+      importedFromBackup:false
+    }
+  };
+
+  const els = {
+    infoPanel:document.getElementById("infoPanel"),
+    infoToggleBtn:document.getElementById("infoToggleBtn"),
+    deckTitleInput:document.getElementById("deckTitleInput"),
+    mainGrid:document.getElementById("mainGrid"),
+    evolveGrid:document.getElementById("evolveGrid"),
+    otherGrid:document.getElementById("otherGrid"),
+    mainEmpty:document.getElementById("mainEmpty"),
+    evolveEmpty:document.getElementById("evolveEmpty"),
+    otherEmpty:document.getElementById("otherEmpty"),
+    mainCountBadge:document.getElementById("mainCountBadge"),
+    mainStatusBadge:document.getElementById("mainStatusBadge"),
+    evolveCountBadge:document.getElementById("evolveCountBadge"),
+    evolveStatusBadge:document.getElementById("evolveStatusBadge"),
+    otherCountBadge:document.getElementById("otherCountBadge"),
+    classTileGrid:document.getElementById("classTileGrid"),
+    storageModal:document.getElementById("storageModal"),
+    storageModalTitle:document.getElementById("storageModalTitle"),
+    closeStorageBtn:document.getElementById("closeStorageBtn"),
+    storageSearchInput:document.getElementById("storageSearchInput"),
+    saveDeckToCurrentClassBtn:document.getElementById("saveDeckToCurrentClassBtn"),
+    storageModalDrop:document.getElementById("storageModalDrop"),
+    storageCardGrid:document.getElementById("storageCardGrid"),
+    importDeckInput:document.getElementById("importDeckInput"),
+    startupModal:document.getElementById("startupModal"),
+    startupImportInput:document.getElementById("startupImportInput"),
+    skipStartupBtn:document.getElementById("skipStartupBtn"),
+    deckListModal:document.getElementById("deckListModal"),
+    openDeckListBtn:document.getElementById("openDeckListBtn"),
+    closeDeckListBtn:document.getElementById("closeDeckListBtn"),
+    createDeckFromListBtn:document.getElementById("createDeckFromListBtn"),
+    saveCurrentDeckBtn:document.getElementById("saveCurrentDeckBtn"),
+    deckListImportInput:document.getElementById("deckListImportInput"),
+    deckListItems:document.getElementById("deckListItems"),
+    importStorageInput:document.getElementById("importStorageInput"),
+    bookmarkletHtmlInput:document.getElementById("bookmarkletHtmlInput"),
+    importBookmarkletHtmlBtn:document.getElementById("importBookmarkletHtmlBtn"),
+    editModal:document.getElementById("editModal"),
+    editTitle:document.getElementById("editTitle"),
+    editPreviewImg:document.getElementById("editPreviewImg"),
+    editNameInput:document.getElementById("editNameInput"),
+    editClassLabel:document.getElementById("editClassLabel"),
+    editClassSelect:document.getElementById("editClassSelect")
+  };
+
+  function makeId(prefix = "card") {
+    if (crypto && typeof crypto.randomUUID === "function") {
+      return `${prefix}_${crypto.randomUUID()}`;
+    }
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  }
+
+  function nowIso() {
+    return new Date().toISOString();
+  }
+
+  function timestampForFilename(date = new Date()) {
+    const pad = value => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+  }
+
+  function makeSaveDataFilename() {
+    return `SVE_SaveData_${timestampForFilename()}.json`;
+  }
+
+  function makeCardStorageFilename() {
+    return `SVE_CardStorage_${timestampForFilename()}.json`;
+  }
+
+  function isPlainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function safeStringValue(value, fallback = "") {
+    return typeof value === "string" ? value : fallback;
+  }
+
+  function safeJsonParse(text, fallback) {
+    try { return JSON.parse(String(text || "")); } catch (_) { return fallback; }
+  }
+
+  function normalizeImportedText(value, fallback = "") {
+    return safeStringValue(value, fallback).trim();
+  }
+
+  function normalizeImportedTags(value) {
+    return Array.isArray(value) ? value.filter(tag => typeof tag === "string").slice(0, 30) : [];
+  }
+
+  function sanitizeFilename(name) {
+    return name
+      .replace(/\.[^.]+$/,"")
+      .replace(/[_-]?\d+x\d+$/i,"")
+      .replace(/^copy\s+of\s+/i,"")
+      .trim() || "カード名未設定";
+  }
+
+  function sanitizeLocalImageFilename(name) {
+    return String(name || "card.png")
+      .split(/[\/]/).pop()
+      .replace(/[?#].*$/g, "")
+      .replace(/[^A-Za-z0-9._-]/g, "_")
+      .replace(/^_+/, "") || "card.png";
+  }
+
+  function localImageSrcFromFile(file) {
+    return `images/${sanitizeLocalImageFilename(file?.name)}`;
+  }
+
+  function normalizeImageSrc(src) {
+    const value = String(src || "").trim();
+    if (!value) return "";
+    if (/^(https?:|data:|blob:)/i.test(value)) return value;
+
+    const normalized = value.replace(/\\/g, "/");
+    const directImages = normalized.match(/^(?:\.\/)?images\/(.+)$/i);
+    if (directImages) return `images/${directImages[1]}`;
+
+    const marker = "/images/";
+    const index = normalized.lastIndexOf(marker);
+    if (index >= 0) return `images/${normalized.slice(index + marker.length)}`;
+
+    return value;
+  }
+
+  function inferSourceType(card) {
+    if (card?.sourceType === "local" || card?.sourceType === "remote") return card.sourceType;
+    const src = normalizeImageSrc(card?.imageSrc || card?.img || card?.url || "");
+    if (/^images\//.test(src)) return "local";
+    if (/^https?:\/\//.test(src)) return "remote";
+    if (card?.imageData) return "legacy-data";
+    return "";
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  async function createImageHash(content) {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(content);
+    const buffer = await crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(buffer)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  function cloneCard(card, overrides = {}) {
+    const imageSrc = normalizeImageSrc(overrides.imageSrc || card.imageSrc || card.img || card.url || "");
+    const sourceType = overrides.sourceType || inferSourceType({...card, imageSrc});
+    return {
+      id:overrides.id || makeId(),
+      name:card.name || "カード名未設定",
+      count:overrides.count ?? card.count ?? 1,
+      imageHash:card.imageHash || "",
+      imageSrc,
+      sourceType,
+      note:card.note || "",
+      memo:card.memo || "",
+      tags:Array.isArray(card.tags) ? [...card.tags] : [],
+      createdAt:card.createdAt || nowIso(),
+      updatedAt:nowIso()
+    };
+  }
+
+  function cloneStorageCard(card, className) {
+    const imageSrc = normalizeImageSrc(card.imageSrc || card.img || card.url || "");
+    return {
+      id:makeId("storage"),
+      name:card.name || "カード名未設定",
+      className,
+      imageHash:card.imageHash || "",
+      imageSrc,
+      sourceType:inferSourceType({...card, imageSrc}),
+      memo:card.memo || "",
+      tags:Array.isArray(card.tags) ? [...card.tags] : [],
+      createdAt:card.createdAt || nowIso(),
+      updatedAt:nowIso()
+    };
+  }
+
+  function getCardImage(card) {
+    return normalizeImageSrc(card?.imageSrc || card?.img || card?.url || "") || card?.imageData || "";
+  }
+
+  function getCardImageKey(card) {
+    return card?.imageHash || normalizeImageSrc(card?.imageSrc || card?.img || card?.url || "") || card?.imageData || "";
+  }
+
+  function getCardSourceLabel(card) {
+    const sourceType = inferSourceType(card);
+    if (sourceType === "local") return "local";
+    if (sourceType === "remote") return "remote";
+    if (sourceType === "legacy-data") return "旧画像込み";
+    if (normalizeImageSrc(card?.imageSrc || card?.img || card?.url || "")) return "リンク";
+    return "画像なし";
+  }
+
+  function isSameCard(a, b) {
+    return Boolean(
+      a &&
+      b &&
+      (a.name || "").trim() === (b.name || "").trim() &&
+      getCardImageKey(a) &&
+      getCardImageKey(b) &&
+      getCardImageKey(a) === getCardImageKey(b)
+    );
+  }
+
+  function clampCount(zone, value) {
+    if (zone === "other") return Math.max(0, Number(value) || 0);
+    return Math.max(0, Math.min(3, Number(value) || 0));
+  }
+
+  function addCardToZone(zone, card, count = 1) {
+    const list = state.deck[zone];
+    const existing = list.find(item => isSameCard(item, card));
+
+    if (existing) {
+      existing.count = clampCount(zone, existing.count + count);
+      existing.updatedAt = nowIso();
+    } else {
+      list.push(cloneCard(card, {count:clampCount(zone, count)}));
+    }
+
+    removeZeroCards(zone);
+    render();
+  }
+
+  function removeZeroCards(zone) {
+    state.deck[zone] = state.deck[zone].filter(card => card.count > 0);
+  }
+
+  function updateCardCount(zone, id, delta) {
+    const card = state.deck[zone].find(item => item.id === id);
+    if (!card) return;
+    card.count = clampCount(zone, card.count + delta);
+    card.updatedAt = nowIso();
+    removeZeroCards(zone);
+    render();
+  }
+
+  function updateDeckCardName(zone, id, name) {
+    const card = state.deck[zone].find(item => item.id === id);
+    if (!card) return;
+    card.name = name.trim() || "カード名未設定";
+    card.updatedAt = nowIso();
+  }
+
+  function removeDeckCard(zone, id) {
+    state.deck[zone] = state.deck[zone].filter(item => item.id !== id);
+    render();
+  }
+
+  function moveDeckCard(sourceZone, id, targetZone, beforeId = null) {
+    const source = state.deck[sourceZone];
+    const index = source.findIndex(item => item.id === id);
+    if (index < 0) return;
+
+    const [card] = source.splice(index, 1);
+
+    if (sourceZone !== targetZone) {
+      const existing = state.deck[targetZone].find(item => isSameCard(item, card));
+      if (existing) {
+        existing.count = clampCount(targetZone, existing.count + card.count);
+        removeZeroCards(sourceZone);
+        render();
+        return;
+      }
+      card.count = clampCount(targetZone, card.count);
+    }
+
+    const target = state.deck[targetZone];
+    const beforeIndex = beforeId ? target.findIndex(item => item.id === beforeId) : -1;
+    if (beforeIndex >= 0) {
+      target.splice(beforeIndex, 0, card);
+    } else {
+      target.push(card);
+    }
+
+    removeZeroCards(sourceZone);
+    removeZeroCards(targetZone);
+    render();
+  }
+
+  function addCardToStorage(className, card) {
+    const list = state.storage[className];
+    if (!list) return false;
+    if (list.some(item => isSameCard(item, card))) return false;
+    list.push(cloneStorageCard(card, className));
+    render();
+    return true;
+  }
+
+  function addDeckToStorage(className) {
+    const cards = [...state.deck.main, ...state.deck.evolve, ...state.deck.other];
+    if (!cards.length) {
+      alert("保存できるデッキカードがありません。");
+      return;
+    }
+
+    let added = 0;
+    cards.forEach(card => {
+      if (addCardToStorage(className, card)) added += 1;
+    });
+    alert(`${className}ストレージへ${added}種類保存しました。`);
+  }
+
+  function deleteStorageCard(className, id) {
+    if (!confirm("このカードをストレージから削除しますか？\n保存済みデッキには影響しません。")) return;
+    state.storage[className] = state.storage[className].filter(card => card.id !== id);
+    render();
+  }
+
+  function findStorageCard(className, id) {
+    return state.storage[className]?.find(card => card.id === id) || null;
+  }
+
+  function moveStorageCard(sourceClass, id, targetClass, beforeId = null) {
+    const source = state.storage[sourceClass];
+    if (!source) return;
+
+    const index = source.findIndex(card => card.id === id);
+    if (index < 0) return;
+
+    const [card] = source.splice(index, 1);
+    card.className = targetClass;
+    card.updatedAt = nowIso();
+
+    const target = state.storage[targetClass];
+    const duplicate = target.find(item => item.id !== card.id && isSameCard(item, card));
+    if (duplicate) {
+      render();
+      return;
+    }
+
+    const beforeIndex = beforeId ? target.findIndex(item => item.id === beforeId) : -1;
+    if (beforeIndex >= 0) {
+      target.splice(beforeIndex, 0, card);
+    } else {
+      target.push(card);
+    }
+
+    if (state.activeStorageClass === sourceClass || state.activeStorageClass === targetClass) {
+      state.activeStorageClass = targetClass;
+    }
+
+    render();
+  }
+
+  function countCards(zone) {
+    if (zone === "other") return state.deck.other.length;
+    return state.deck[zone].reduce((sum, card) => sum + card.count, 0);
+  }
+
+  function setBadge(el, text, status) {
+    el.textContent = text;
+    el.classList.remove("ok","warn","bad");
+    if (status) el.classList.add(status);
+  }
+
+  function renderStats() {
+    const mainCount = countCards("main");
+    const evolveCount = countCards("evolve");
+    const otherCount = countCards("other");
+
+    const mainStatus = mainCount >= 40 && mainCount <= 50 ? "ok" : mainCount > 50 ? "bad" : "warn";
+    const mainLabel = mainCount >= 40 && mainCount <= 50 ? "OK" : mainCount > 50 ? "超過" : "不足";
+    const evolveStatus = evolveCount <= 10 ? "ok" : "bad";
+    const evolveLabel = evolveCount <= 10 ? "OK" : "超過";
+
+    setBadge(els.mainCountBadge, `${mainCount} / 40〜50`, mainStatus);
+    setBadge(els.mainStatusBadge, mainLabel, mainStatus);
+    setBadge(els.evolveCountBadge, `${evolveCount} / 0〜10`, evolveStatus);
+    setBadge(els.evolveStatusBadge, evolveLabel, evolveStatus);
+    setBadge(els.otherCountBadge, `${otherCount} 種`, "ok");
+  }
+
+  function createDeckCardElement(card, zone) {
+    const root = document.createElement("article");
+    root.className = "deck-card";
+    root.draggable = true;
+    root.dataset.id = card.id;
+    root.dataset.zone = zone;
+
+    const img = document.createElement("img");
+    img.src = getCardImage(card);
+    img.alt = card.name || "";
+    root.appendChild(img);
+
+    const body = document.createElement("div");
+    body.className = "card-body";
+
+    const nameInput = document.createElement("input");
+    nameInput.className = "card-name-input";
+    nameInput.value = card.name || "";
+    nameInput.placeholder = "カード名";
+    nameInput.addEventListener("change", () => updateDeckCardName(zone, card.id, nameInput.value));
+    body.appendChild(nameInput);
+
+    const countRow = document.createElement("div");
+    countRow.className = "count-row";
+
+    const minusBtn = document.createElement("button");
+    minusBtn.type = "button";
+    minusBtn.className = "secondary";
+    minusBtn.textContent = "−";
+    minusBtn.addEventListener("click", () => updateCardCount(zone, card.id, -1));
+
+    const count = document.createElement("div");
+    count.className = "count-num";
+    count.textContent = `${card.count}`;
+
+    const plusBtn = document.createElement("button");
+    plusBtn.type = "button";
+    plusBtn.textContent = "+";
+    plusBtn.disabled = zone !== "other" && card.count >= 3;
+    plusBtn.addEventListener("click", () => updateCardCount(zone, card.id, 1));
+
+    countRow.append(minusBtn, count, plusBtn);
+    body.appendChild(countRow);
+    root.appendChild(body);
+
+    root.addEventListener("dragstart", event => {
+      state.dragging = {kind:"deck", zone, id:card.id};
+      root.classList.add("dragging");
+      event.dataTransfer.setData("application/x-sve-deck-card", JSON.stringify(state.dragging));
+      event.dataTransfer.effectAllowed = "move";
+    });
+
+    root.addEventListener("dragend", () => {
+      state.dragging = null;
+      root.classList.remove("dragging");
+      document.querySelectorAll(".deck-card.drop-before").forEach(el => el.classList.remove("drop-before"));
+    });
+
+    root.addEventListener("dragover", event => {
+      if (state.dragging?.kind !== "deck") return;
+      event.preventDefault();
+      root.classList.add("drop-before");
+    });
+
+    root.addEventListener("dragleave", () => {
+      root.classList.remove("drop-before");
+    });
+
+    root.addEventListener("drop", event => {
+      const raw = event.dataTransfer.getData("application/x-sve-deck-card");
+      if (!raw) return;
+      event.preventDefault();
+      root.classList.remove("drop-before");
+      const data = safeJsonParse(raw, {});
+      if (isPlainObject(data)) moveDeckCard(data.zone, data.id, zone, card.id);
+    });
+
+    return root;
+  }
+
+  function renderDeckZone(zone) {
+    const grid = els[`${zone}Grid`];
+    const empty = els[`${zone}Empty`];
+    grid.innerHTML = "";
+    state.deck[zone].forEach(card => grid.appendChild(createDeckCardElement(card, zone)));
+    empty.style.display = state.deck[zone].length ? "none" : "grid";
+  }
+
+  function renderDeck() {
+    renderDeckZone("main");
+    renderDeckZone("evolve");
+    renderDeckZone("other");
+    renderStats();
+  }
+
+  function renderClassTiles() {
+    els.classTileGrid.innerHTML = "";
+    STORAGE_CLASSES.forEach(className => {
+      const tile = document.createElement("button");
+      tile.type = "button";
+      tile.className = "class-tile";
+      tile.textContent = className;
+      tile.addEventListener("click", () => openStorageModal(className));
+      setupStorageClassDrop(tile, className);
+      els.classTileGrid.appendChild(tile);
+    });
+  }
+
+  function createStorageCardElement(card, className) {
+    const root = document.createElement("article");
+    root.className = "storage-card";
+    root.draggable = true;
+
+    const img = document.createElement("img");
+    img.src = getCardImage(card);
+    img.alt = card.name || "";
+
+    const name = document.createElement("strong");
+    name.textContent = card.name || "カード名未設定";
+
+    const actions = document.createElement("div");
+    actions.className = "storage-actions";
+
+    actions.append(
+      makeSmallButton("主", () => addCardToZone("main", card, 1)),
+      makeSmallButton("EV", () => addCardToZone("evolve", card, 1)),
+      makeSmallButton("他", () => addCardToZone("other", card, 1)),
+      makeSmallButton("削除", () => deleteStorageCard(className, card.id), "danger")
+    );
+
+    root.addEventListener("dblclick", () => openEditModal({type:"storage", className, id:card.id}));
+
+    root.addEventListener("contextmenu", event => {
+      event.preventDefault();
+      openEditModal({type:"storage", className, id:card.id});
+    });
+
+    root.addEventListener("dragstart", event => {
+      state.dragging = {kind:"storage", className, id:card.id};
+      root.classList.add("dragging");
+      event.dataTransfer.setData("application/x-sve-storage-card", JSON.stringify(state.dragging));
+      event.dataTransfer.effectAllowed = "copyMove";
+    });
+
+    root.addEventListener("dragend", () => {
+      state.dragging = null;
+      root.classList.remove("dragging");
+      document.querySelectorAll(".storage-card.drop-before").forEach(el => el.classList.remove("drop-before"));
+    });
+
+    root.addEventListener("dragover", event => {
+      if (state.dragging?.kind !== "storage") return;
+      event.preventDefault();
+      root.classList.add("drop-before");
+    });
+
+    root.addEventListener("dragleave", () => {
+      root.classList.remove("drop-before");
+    });
+
+    root.addEventListener("drop", event => {
+      const raw = event.dataTransfer.getData("application/x-sve-storage-card");
+      if (!raw) return;
+      event.preventDefault();
+      root.classList.remove("drop-before");
+      const data = safeJsonParse(raw, {});
+      if (isPlainObject(data)) moveStorageCard(data.className, data.id, className, card.id);
+    });
+
+    root.append(img, name, actions);
+    return root;
+  }
+
+  function renderStorageModal() {
+    const className = state.activeStorageClass;
+    if (!className) return;
+
+    const query = els.storageSearchInput.value.trim().toLowerCase();
+    els.storageModalTitle.textContent = `${className}ストレージ`;
+    els.storageCardGrid.innerHTML = "";
+
+    const cards = state.storage[className].filter(card => {
+      return !query || (card.name || "").toLowerCase().includes(query);
+    });
+
+    if (!cards.length) {
+      const empty = document.createElement("div");
+      empty.className = "storage-empty";
+      empty.textContent = "カードなし";
+      els.storageCardGrid.appendChild(empty);
+      return;
+    }
+
+    cards.forEach(card => {
+      els.storageCardGrid.appendChild(createStorageCardElement(card, className));
+    });
+  }
+
+  function render() {
+    renderDeck();
+    renderClassTiles();
+    renderStorageModal();
+    renderDeckListModal();
+  }
+
+  function makeSmallButton(text, onClick, className = "") {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = text;
+    if (className) btn.className = className;
+    btn.addEventListener("click", onClick);
+    return btn;
+  }
+
+  async function readAndNormalizeImage(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      throw new Error("画像ファイルではありません。");
+    }
+
+    const imageSrc = localImageSrcFromFile(file);
+    const imageHash = await createImageHash(imageSrc);
+
+    return {
+      id:makeId(),
+      name:sanitizeFilename(file.name),
+      count:1,
+      imageHash,
+      imageSrc,
+      sourceType:"local",
+      note:"",
+      createdAt:nowIso(),
+      updatedAt:nowIso()
+    };
+  }
+
+  function getFileNameFromUrl(url) {
+    try {
+      const pathname = new URL(url, location.href).pathname;
+      const fileName = decodeURIComponent(pathname.split("/").pop() || "");
+      return sanitizeFilename(fileName);
+    } catch {
+      return "カード名未設定";
+    }
+  }
+
+  function extractWebImagePayload(event) {
+    const html = event.dataTransfer.getData("text/html");
+    if (html) {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const img = doc.querySelector("img");
+      if (img) {
+        const src = img.getAttribute("src") || img.src;
+        const name = img.getAttribute("alt") || img.getAttribute("title") || getFileNameFromUrl(src);
+        if (src) {
+          return {
+            url:new URL(src, location.href).href,
+            name:sanitizeFilename(name)
+          };
+        }
+      }
+    }
+
+    const uriList = event.dataTransfer.getData("text/uri-list");
+    const plain = event.dataTransfer.getData("text/plain");
+    const urlText = (uriList || plain || "").split(/\r?\n/).find(line => /^https?:\/\//.test(line.trim()));
+
+    if (urlText) {
+      const url = urlText.trim();
+      return {
+        url,
+        name:getFileNameFromUrl(url)
+      };
+    }
+
+    return null;
+  }
+
+  async function fetchWebImageAsCard(payload) {
+    if (!payload || !payload.url) {
+      throw new Error("Web画像情報を取得できませんでした。");
+    }
+    const imageSrc = new URL(payload.url, location.href).href;
+    const imageHash = await createImageHash(imageSrc);
+    return {
+      id:makeId(),
+      name:payload.name || getFileNameFromUrl(imageSrc),
+      count:1,
+      imageHash,
+      imageSrc,
+      sourceType:"remote",
+      note:"",
+      createdAt:nowIso(),
+      updatedAt:nowIso()
+    };
+  }
+
+  async function addDropDataToZone(event, zone) {
+    if (event.dataTransfer.files && event.dataTransfer.files.length) {
+      await addFilesToZone(event.dataTransfer.files, zone);
+      return;
+    }
+
+    const payload = extractWebImagePayload(event);
+    if (!payload) {
+      alert("画像を取得できませんでした。Finder画像、または公式カードリストのカード画像をドロップしてください。");
+      return;
+    }
+
+    try {
+      const card = await fetchWebImageAsCard(payload);
+      addCardToZone(zone, card, 1);
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function addDropDataToStorage(event, className) {
+    if (event.dataTransfer.files && event.dataTransfer.files.length) {
+      await addFilesToStorage(event.dataTransfer.files, className);
+      return;
+    }
+
+    const payload = extractWebImagePayload(event);
+    if (!payload) {
+      alert("画像を取得できませんでした。Finder画像、または公式カードリストのカード画像をドロップしてください。");
+      return;
+    }
+
+    try {
+      const card = await fetchWebImageAsCard(payload);
+      if (addCardToStorage(className, card)) {
+        alert(`${className}ストレージへ追加しました。`);
+      }
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function ensureCardHash(card) {
+    if (card.imageHash || !card.imageData) return card;
+    card.imageHash = await createImageHash(card.imageData);
+    return card;
+  }
+
+  async function addFilesToZone(files, zone) {
+    const imageFiles = [...files].filter(file => file.type.startsWith("image/"));
+    if (!imageFiles.length) {
+      alert("画像ファイルが見つかりませんでした。Finder画像、または公式カードリストのカード画像をドロップしてください。");
+      return;
+    }
+
+    for (const file of imageFiles) {
+      try {
+        const card = await readAndNormalizeImage(file);
+        addCardToZone(zone, card, 1);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+  }
+
+  async function addFilesToStorage(files, className) {
+    const imageFiles = [...files].filter(file => file.type.startsWith("image/"));
+    if (!imageFiles.length) {
+      alert("画像ファイルが見つかりませんでした。Finder画像、または公式カードリストのカード画像をドロップしてください。");
+      return;
+    }
+
+    let added = 0;
+    for (const file of imageFiles) {
+      try {
+        const card = await readAndNormalizeImage(file);
+        if (addCardToStorage(className, card)) added += 1;
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    render();
+    if (added) alert(`${className}ストレージへ${added}種類追加しました。`);
+  }
+
+  function setupDropAreas() {
+    document.querySelectorAll("[data-drop-zone]").forEach(area => {
+      const zone = area.dataset.dropZone;
+
+      area.addEventListener("dragover", event => {
+        event.preventDefault();
+        area.classList.add("drag-over");
+      });
+
+      area.addEventListener("dragleave", () => {
+        area.classList.remove("drag-over");
+      });
+
+      area.addEventListener("drop", event => {
+        event.preventDefault();
+        area.classList.remove("drag-over");
+
+        const storageMoved = event.dataTransfer.getData("application/x-sve-storage-card");
+        if (storageMoved) {
+          const data = safeJsonParse(storageMoved, {});
+          const card = isPlainObject(data) ? state.storage[data.className]?.find(item => item.id === data.id) : null;
+          if (card) addCardToZone(zone, card, 1);
+          return;
+        }
+
+        const moved = event.dataTransfer.getData("application/x-sve-deck-card");
+        if (moved) {
+          const data = safeJsonParse(moved, {});
+          if (isPlainObject(data)) moveDeckCard(data.zone, data.id, zone);
+          return;
+        }
+
+        addDropDataToZone(event, zone);
+      });
+    });
+  }
+
+  function setupStorageClassDrop(element, className) {
+    element.addEventListener("dragover", event => {
+      const types = event.dataTransfer.types ? [...event.dataTransfer.types] : [];
+      const hasFiles = types.includes("Files");
+      const hasWebImage = types.includes("text/html") || types.includes("text/uri-list") || types.includes("text/plain");
+      const hasDeckCard = state.dragging?.kind === "deck";
+      const hasStorageCard = state.dragging?.kind === "storage";
+      if (!hasFiles && !hasWebImage && !hasDeckCard && !hasStorageCard) return;
+      event.preventDefault();
+      element.classList.add("drag-over");
+    });
+
+    element.addEventListener("dragleave", () => {
+      element.classList.remove("drag-over");
+    });
+
+    element.addEventListener("drop", event => {
+      element.classList.remove("drag-over");
+
+      const storageRaw = event.dataTransfer.getData("application/x-sve-storage-card");
+      if (storageRaw) {
+        event.preventDefault();
+        const data = safeJsonParse(storageRaw, {});
+        if (isPlainObject(data)) moveStorageCard(data.className, data.id, className);
+        return;
+      }
+
+
+      const raw = event.dataTransfer.getData("application/x-sve-deck-card");
+      if (raw) {
+        event.preventDefault();
+        const data = safeJsonParse(raw, {});
+        const card = isPlainObject(data) && state.deck[data.zone] ? state.deck[data.zone].find(item => item.id === data.id) : null;
+        if (card) addCardToStorage(className, card);
+        return;
+      }
+
+      event.preventDefault();
+      addDropDataToStorage(event, className);
+    });
+  }
+
+  function setupStorageModalDrop() {
+    els.storageModalDrop.addEventListener("dragover", event => {
+      const types = event.dataTransfer.types ? [...event.dataTransfer.types] : [];
+      const hasFiles = types.includes("Files");
+      const hasWebImage = types.includes("text/html") || types.includes("text/uri-list") || types.includes("text/plain");
+      const hasDeckCard = state.dragging?.kind === "deck";
+      const hasStorageCard = state.dragging?.kind === "storage";
+      if (!hasFiles && !hasWebImage && !hasDeckCard && !hasStorageCard) return;
+      event.preventDefault();
+      els.storageModalDrop.classList.add("drag-over");
+    });
+
+    els.storageModalDrop.addEventListener("dragleave", () => {
+      els.storageModalDrop.classList.remove("drag-over");
+    });
+
+    els.storageModalDrop.addEventListener("drop", event => {
+      els.storageModalDrop.classList.remove("drag-over");
+      const className = state.activeStorageClass;
+      if (!className) return;
+
+      const storageRaw = event.dataTransfer.getData("application/x-sve-storage-card");
+      if (storageRaw) {
+        event.preventDefault();
+        const data = safeJsonParse(storageRaw, {});
+        if (isPlainObject(data)) moveStorageCard(data.className, data.id, className);
+        return;
+      }
+
+
+      const raw = event.dataTransfer.getData("application/x-sve-deck-card");
+      if (raw) {
+        event.preventDefault();
+        const data = safeJsonParse(raw, {});
+        const card = isPlainObject(data) && state.deck[data.zone] ? state.deck[data.zone].find(item => item.id === data.id) : null;
+        if (card) addCardToStorage(className, card);
+        return;
+      }
+
+      event.preventDefault();
+      addDropDataToStorage(event, className);
+    });
+  }
+
+  function openStorageModal(className) {
+    state.activeStorageClass = className;
+    els.storageSearchInput.value = "";
+    els.storageModal.classList.add("open");
+    els.storageModal.setAttribute("aria-hidden", "false");
+    renderStorageModal();
+  }
+
+  function closeStorageModal() {
+    els.storageModal.classList.remove("open");
+    els.storageModal.setAttribute("aria-hidden", "true");
+    state.activeStorageClass = null;
+  }
+
+  function openEditModal(target) {
+    const card = getEditingCard(target);
+    if (!card) return;
+
+    state.editing = target;
+    els.editTitle.textContent = "ストレージカード編集";
+    els.editPreviewImg.src = getCardImage(card);
+    els.editPreviewImg.alt = card.name || "";
+    els.editNameInput.value = card.name || "";
+    els.editClassLabel.style.display = "grid";
+    els.editClassSelect.value = target.className || "ニュートラル";
+    els.editModal.classList.add("open");
+    els.editModal.setAttribute("aria-hidden","false");
+  }
+
+  function closeEditModal() {
+    state.editing = null;
+    els.editModal.classList.remove("open");
+    els.editModal.setAttribute("aria-hidden","true");
+  }
+
+  function getEditingCard(target) {
+    if (!target || target.type !== "storage") return null;
+    return state.storage[target.className].find(card => card.id === target.id);
+  }
+
+  function saveEditingCard() {
+    const target = state.editing;
+    const card = getEditingCard(target);
+    if (!card) return;
+
+    card.name = els.editNameInput.value.trim() || "カード名未設定";
+    card.updatedAt = nowIso();
+
+    const newClass = els.editClassSelect.value;
+    if (newClass !== target.className) {
+      state.storage[target.className] = state.storage[target.className].filter(item => item.id !== target.id);
+      card.className = newClass;
+      state.storage[newClass].push(card);
+      state.activeStorageClass = newClass;
+    }
+
+    render();
+    closeEditModal();
+  }
+
+  function deleteEditingCard() {
+    const target = state.editing;
+    if (!target) return;
+    deleteStorageCard(target.className, target.id);
+    closeEditModal();
+  }
+
+  function buildDeckSaveData() {
+    const title = els.deckTitleInput.value.trim();
+    const stamp = nowIso();
+
+    return {
+      schema:BUILDER_SCHEMA,
+      version:2,
+      type:"deck",
+      title,
+      createdAt:stamp,
+      updatedAt:stamp,
+      imageSize:{width:IMAGE_WIDTH, height:IMAGE_HEIGHT},
+      main:state.deck.main.map(normalizeDeckCardForSave),
+      evolve:state.deck.evolve.map(normalizeDeckCardForSave),
+      other:state.deck.other.map(normalizeDeckCardForSave)
+    };
+  }
+
+  function normalizeDeckCardForSave(card) {
+    const imageSrc = normalizeImageSrc(card.imageSrc || card.img || card.url || "");
+    return {
+      id:card.id || makeId(),
+      name:card.name || "カード名未設定",
+      count:card.count || 1,
+      imageHash:card.imageHash || "",
+      imageSrc,
+      sourceType:inferSourceType({...card, imageSrc}),
+      note:card.note || ""
+    };
+  }
+
+  function buildStorageSaveData() {
+    const stamp = nowIso();
+    return {
+      schema:BUILDER_SCHEMA,
+      version:2,
+      type:"storage",
+      title:"カードストレージ",
+      createdAt:stamp,
+      updatedAt:stamp,
+      imageSize:{width:IMAGE_WIDTH, height:IMAGE_HEIGHT},
+      classes:Object.fromEntries(STORAGE_CLASSES.map(className => [
+        className,
+        state.storage[className].map(card => {
+          const imageSrc = normalizeImageSrc(card.imageSrc || card.img || card.url || "");
+          return {
+            id:card.id || makeId("storage"),
+            name:card.name || "カード名未設定",
+            className,
+            imageHash:card.imageHash || "",
+            imageSrc,
+            sourceType:inferSourceType({...card, imageSrc}),
+            memo:card.memo || "",
+            tags:Array.isArray(card.tags) ? card.tags : []
+          };
+        })
+      ]))
+    };
+  }
+
+  function exportJson(filename, data) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function safeFilename(value, fallback) {
+    return (value || fallback)
+      .replace(/[\\/:*?"<>|]/g,"_")
+      .replace(/\s+/g,"_")
+      .slice(0,80);
+  }
+
+
+  function isSoloBackupData(data) {
+    const stores = data?.stores || data;
+    return Boolean(stores && stores.savedDecks && typeof stores.savedDecks === "object");
+  }
+
+  function getSoloSavedDecks(data) {
+    const stores = data?.stores || data;
+    return stores?.savedDecks && typeof stores.savedDecks === "object" ? stores.savedDecks : {};
+  }
+
+  function cloneJsonSafe(value) {
+    return JSON.parse(JSON.stringify(value || {}));
+  }
+
+  function makeEmptySoloBackupData() {
+    const stamp = nowIso();
+    return {
+      app:"Shadowverse EVOLVE 一人回しツール",
+      version:SOLO_BACKUP_VERSION,
+      exportedAt:stamp,
+      note:"デッキ作成ツールから書き出した一人回しツール互換バックアップです。保存デッキを保持し、編集中のデッキだけ差し替えます。",
+      stores:{
+        savedDecks:{}
+      }
+    };
+  }
+
+  function rememberSoloBackup(data) {
+    const base = cloneJsonSafe(isPlainObject(data) ? data : makeEmptySoloBackupData());
+    if (!isPlainObject(base.stores)) base.stores = {};
+    if (!isPlainObject(base.stores.savedDecks)) base.stores.savedDecks = {};
+    const savedDecks = {};
+    Object.entries(base.stores.savedDecks).forEach(([name, item]) => {
+      const safeName = normalizeImportedText(name);
+      if (!safeName) return;
+      if (typeof item === "string" && item.trim()) {
+        savedDecks[safeName] = {html:item, updatedAt:nowIso()};
+        return;
+      }
+      if (isPlainObject(item) && typeof item.html === "string" && item.html.trim()) {
+        savedDecks[safeName] = {...item, html:item.html, updatedAt:safeStringValue(item.updatedAt, nowIso()) || nowIso()};
+      }
+    });
+    base.stores.savedDecks = savedDecks;
+    state.soloBackup.baseData = base;
+    state.soloBackup.savedDecks = base.stores.savedDecks;
+    state.soloBackup.importedFromBackup = true;
+  }
+
+  function ensureSoloBackupContext() {
+    if (!state.soloBackup.baseData) {
+      state.soloBackup.baseData = makeEmptySoloBackupData();
+      state.soloBackup.savedDecks = state.soloBackup.baseData.stores.savedDecks;
+      state.soloBackup.importedFromBackup = false;
+    }
+    if (!isPlainObject(state.soloBackup.baseData.stores)) state.soloBackup.baseData.stores = {};
+    if (!isPlainObject(state.soloBackup.baseData.stores.savedDecks)) {
+      state.soloBackup.baseData.stores.savedDecks = {};
+    }
+    state.soloBackup.savedDecks = state.soloBackup.baseData.stores.savedDecks;
+  }
+
+  function looksLikeSoloToolAppHtml(text) {
+    if (typeof text !== "string") return false;
+    const head = text.slice(0, 40000);
+    return /<title>\s*Shadowverse EVOLVE 一人回しツール/i.test(head)
+      || (head.includes("sveSoloSavedDecksV1") && head.includes("collectSaveData"))
+      || (head.includes("deckBookmarklet") && head.includes("デッキHTML取得"));
+  }
+
+  function extractDeckviewOuterHtml(text) {
+    if (typeof text !== "string") return "";
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    const deckview = doc.querySelector(".deckview");
+    return deckview ? deckview.outerHTML : "";
+  }
+
+  async function importSoloDeckHtmlData(html, title = "読み込みデッキ", options = {}) {
+    const parsed = parseSoloDeckHtml(html || "");
+    if (!parsed.main.length && !parsed.evolve.length) {
+      throw new Error("deckview HTMLからメインデッキ・エボルヴデッキを読み取れませんでした。");
+    }
+    const deckTitle = title || "読み込みデッキ";
+    els.deckTitleInput.value = deckTitle;
+    state.deck.main = await normalizeImportedDeckList(parsed.main, "main");
+    state.deck.evolve = await normalizeImportedDeckList(parsed.evolve, "evolve");
+    state.deck.other = await normalizeImportedDeckList(parsed.other || [], "other");
+    if (options.setSelected !== false) {
+      state.soloBackup.selectedDeckName = deckTitle;
+    }
+    render();
+  }
+
+  async function importSoloBackupData(data, options = {}) {
+    rememberSoloBackup(data);
+    const names = getDeckListNames();
+    if (!names.length) throw new Error("一人回しツールの保存デッキが見つかりません。");
+
+    const selectedName = options.selectedName && state.soloBackup.savedDecks[options.selectedName]
+      ? options.selectedName
+      : names[0];
+
+    await loadSoloDeckByName(selectedName);
+    if (options.openList !== false) openDeckListModal();
+  }
+
+
+  function closeStartupModal() {
+    els.startupModal.classList.remove("open");
+    els.startupModal.setAttribute("aria-hidden", "true");
+  }
+
+  function openStartupModal() {
+    els.startupModal.classList.add("open");
+    els.startupModal.setAttribute("aria-hidden", "false");
+  }
+
+  function getDeckListNames() {
+    ensureSoloBackupContext();
+    return Object.keys(state.soloBackup.savedDecks || {})
+      .filter(name => state.soloBackup.savedDecks[name]?.html)
+      .sort((a,b) => a.localeCompare(b, "ja"));
+  }
+
+  function openDeckListModal() {
+    ensureSoloBackupContext();
+    renderDeckListModal();
+    els.deckListModal.classList.add("open");
+    els.deckListModal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeDeckListModal() {
+    els.deckListModal.classList.remove("open");
+    els.deckListModal.setAttribute("aria-hidden", "true");
+  }
+
+  function makeUniqueDeckName(base) {
+    ensureSoloBackupContext();
+    const root = (base || "新規デッキ").trim() || "新規デッキ";
+    let name = root;
+    let index = 2;
+    while (state.soloBackup.savedDecks[name]) {
+      name = `${root} (${index})`;
+      index += 1;
+    }
+    return name;
+  }
+
+  async function loadSoloDeckByName(name) {
+    ensureSoloBackupContext();
+    const item = state.soloBackup.savedDecks[name];
+    if (!item || !item.html) throw new Error(`デッキ「${name}」を読み込めませんでした。`);
+    state.soloBackup.selectedDeckName = name;
+    await importSoloDeckHtmlData(item.html || "", name, {setSelected:false});
+  }
+
+  function saveCurrentDeckToSoloList(targetName = "") {
+    ensureSoloBackupContext();
+    const title = (targetName || els.deckTitleInput.value || state.soloBackup.selectedDeckName || "デッキ名未設定").trim() || "デッキ名未設定";
+    const previousName = state.soloBackup.selectedDeckName;
+    const stamp = nowIso();
+
+    if (previousName && previousName !== title && state.soloBackup.savedDecks[previousName]) {
+      delete state.soloBackup.savedDecks[previousName];
+    }
+
+    state.soloBackup.savedDecks[title] = {
+      html:buildSoloDeckHtml(),
+      updatedAt:stamp
+    };
+    state.soloBackup.selectedDeckName = title;
+    els.deckTitleInput.value = title;
+    renderDeckListModal();
+    return title;
+  }
+
+  function createNewDeckFromList() {
+    const name = makeUniqueDeckName(prompt("新規デッキ名を入力してください", "新規デッキ") || "新規デッキ");
+    state.deck.main = [];
+    state.deck.evolve = [];
+    state.deck.other = [];
+    els.deckTitleInput.value = name;
+    state.soloBackup.selectedDeckName = name;
+    saveCurrentDeckToSoloList(name);
+    render();
+  }
+
+  function renameDeckInList(name) {
+    ensureSoloBackupContext();
+    const current = state.soloBackup.savedDecks[name];
+    if (!current) return;
+    const nextNameRaw = prompt("新しいデッキ名を入力してください", name);
+    if (!nextNameRaw) return;
+    const nextName = nextNameRaw.trim();
+    if (!nextName || nextName === name) return;
+    if (state.soloBackup.savedDecks[nextName]) {
+      alert("同名のデッキが既にあります。");
+      return;
+    }
+    state.soloBackup.savedDecks[nextName] = {
+      ...current,
+      updatedAt:nowIso()
+    };
+    delete state.soloBackup.savedDecks[name];
+    if (state.soloBackup.selectedDeckName === name) {
+      state.soloBackup.selectedDeckName = nextName;
+      els.deckTitleInput.value = nextName;
+    }
+    renderDeckListModal();
+  }
+
+  function duplicateDeckInList(name) {
+    ensureSoloBackupContext();
+    const current = state.soloBackup.savedDecks[name];
+    if (!current) return;
+    const copyName = makeUniqueDeckName(`${name} コピー`);
+    state.soloBackup.savedDecks[copyName] = cloneJsonSafe({
+      ...current,
+      updatedAt:nowIso()
+    });
+    renderDeckListModal();
+  }
+
+  function deleteDeckFromList(name) {
+    ensureSoloBackupContext();
+    if (!confirm(`デッキ「${name}」を削除しますか？`)) return;
+    delete state.soloBackup.savedDecks[name];
+    if (state.soloBackup.selectedDeckName === name) {
+      state.soloBackup.selectedDeckName = "";
+    }
+    renderDeckListModal();
+  }
+
+  function renderDeckListModal() {
+    if (!els.deckListItems) return;
+    ensureSoloBackupContext();
+    const names = getDeckListNames();
+    els.deckListItems.innerHTML = "";
+
+    if (!names.length) {
+      const empty = document.createElement("div");
+      empty.className = "storage-empty";
+      empty.textContent = "デッキリストは空です。「新規デッキ作成」から始められます。";
+      els.deckListItems.appendChild(empty);
+      return;
+    }
+
+    names.forEach(name => {
+      const item = state.soloBackup.savedDecks[name] || {};
+      const row = document.createElement("div");
+      row.className = "deck-list-item" + (state.soloBackup.selectedDeckName === name ? " current" : "");
+      const editingLabel = state.soloBackup.selectedDeckName === name ? "編集中" : "";
+      row.innerHTML = `<div><strong>${escapeHtml(name)}</strong>${editingLabel ? `<small>${escapeHtml(editingLabel)}</small>` : ""}</div>`;
+
+      const actions = document.createElement("div");
+      actions.className = "deck-list-actions";
+      actions.append(
+        makeSmallButton("開く", async () => {
+          try {
+            await loadSoloDeckByName(name);
+            render();
+          } catch (error) {
+            alert(error.message);
+          }
+        }),
+        makeSmallButton("名前変更", () => renameDeckInList(name), "secondary"),
+        makeSmallButton("複製", () => duplicateDeckInList(name), "secondary"),
+        makeSmallButton("削除", () => deleteDeckFromList(name), "danger")
+      );
+      row.appendChild(actions);
+      els.deckListItems.appendChild(row);
+    });
+  }
+
+  function parseSoloDeckHtml(html) {
+    const result = {main:[], evolve:[], other:[]};
+    if (!html || typeof html !== "string") return result;
+
+    const doc = new DOMParser().parseFromString(`<div id="root">${html}</div>`, "text/html");
+    const root = doc.querySelector(".deckview") || doc.querySelector("#root");
+    let zone = null;
+
+    root.querySelectorAll("h3,.card-item").forEach(node => {
+      if (node.tagName === "H3") {
+        const text = node.textContent.trim();
+        if (text.includes("メイン")) zone = "main";
+        else if (text.includes("エボルヴ")) zone = "evolve";
+        else if (text.includes("その他") || text.includes("トークン") || /other/i.test(text)) zone = "other";
+        else zone = null;
+        return;
+      }
+
+      if (!node.matches(".card-item") || !zone) return;
+      const img = node.querySelector("img");
+      if (!img) return;
+
+      const rawTitle = img.getAttribute("title") || node.querySelector(".card-detail")?.getAttribute("title") || "";
+      const rawAlt = img.getAttribute("alt") || rawTitle || "カード名未設定";
+      const name = (rawAlt || rawTitle || "カード名未設定").replace(/^[^:：]+[:：]\s*/, "").trim() || "カード名未設定";
+      const num = node.querySelector(".num");
+      const qtyText = (num?.textContent || "1").trim();
+      const count = Math.max(1, Number((qtyText.match(/\d+/) || [])[0] || 1));
+      const src = img.getAttribute("data-src") || img.getAttribute("src") || "";
+      const imageSrc = normalizeImageSrc(src);
+      if (!imageSrc) return;
+
+      result[zone].push({
+        id:makeId(zone),
+        name,
+        count,
+        imageSrc,
+        sourceType:inferSourceType({imageSrc}),
+        imageHash:"",
+        note:""
+      });
+    });
+
+    return result;
+  }
+
+  function buildSoloDeckHtml() {
+    const renderCards = (cards, zone) => cards.map(card => {
+      const src = getCardImage(card);
+      if (!src) return "";
+      const name = escapeHtml(card.name || "カード名未設定");
+      const count = clampCount(zone, card.count || 1);
+      const title = name;
+      return `<div class="card-item col-xl-2 col-lg-3 col-sm-4 col-6"><div class="card-container card-view"><img alt="${name}" title="${title}" class="card-view-item is-select" data-src="${escapeHtml(src)}" src="${escapeHtml(src)}" lazy="loaded"><div class="card-controller"><div class="card-controller-inner"><span title="${title}" class="card-ctrl card-detail"></span><span class="num">${count}</span></div></div></div></div>`;
+    }).join("");
+
+    const otherSection = state.deck.other.length
+      ? `<h3>その他カード</h3><div class="row" data-sve-zone="other">${renderCards(state.deck.other, "other")}</div>`
+      : "";
+
+    return `<div class="deckview"><div><h3>メインデッキ</h3><div class="row">${renderCards(state.deck.main, "main")}</div><h3>エボルヴデッキ</h3><div class="row">${renderCards(state.deck.evolve, "evolve")}</div>${otherSection}</div></div>`;
+  }
+
+  function buildSoloBackupSaveData() {
+    ensureSoloBackupContext();
+    const title = saveCurrentDeckToSoloList();
+    const stamp = nowIso();
+    const backup = cloneJsonSafe(state.soloBackup.baseData);
+    if (!backup.stores) backup.stores = {};
+    backup.stores.savedDecks = cloneJsonSafe(state.soloBackup.savedDecks);
+    // デッキビルダーは保存トークン・追加トークンを編集しないため、
+    // 空配列を含めて一人回し側の既存データを0件で上書きしない。
+    if (Array.isArray(backup.stores.savedTokens) && backup.stores.savedTokens.length === 0) {
+      delete backup.stores.savedTokens;
+    }
+    if (Array.isArray(backup.stores.userTokens) && backup.stores.userTokens.length === 0) {
+      delete backup.stores.userTokens;
+    }
+
+    backup.app = backup.app || "Shadowverse EVOLVE 一人回しツール";
+    backup.version = backup.version || SOLO_BACKUP_VERSION;
+    backup.sourceTool = "SVE Deck Builder";
+    backup.exportedAt = stamp;
+    backup.note = "デッキ作成ツールから書き出した一人回しツール互換セーブデータです。読み込んだ全保存デッキを保持し、編集中のデッキだけ差し替えています。追加トークン一覧・保存トークン情報が元セーブデータに含まれている場合は、その内容も保持します。";
+    state.soloBackup.baseData = cloneJsonSafe(backup);
+    state.soloBackup.savedDecks = state.soloBackup.baseData.stores.savedDecks;
+    state.soloBackup.selectedDeckName = title;
+    return backup;
+  }
+
+  async function importDeckData(data) {
+    if (typeof data === "string") {
+      if (looksLikeSoloToolAppHtml(data)) {
+        throw new Error("このHTMLは直接読み込めません。一人回しツール側で『セーブデータを書き出し』したJSON、またはブックマークレットで取得したdeckview HTMLを読み込んでください。");
+      }
+      const deckviewHtml = extractDeckviewOuterHtml(data) || data;
+      await importSoloDeckHtmlData(deckviewHtml, "読み込みデッキ");
+      return;
+    }
+
+    if (isSoloBackupData(data)) {
+      await importSoloBackupData(data);
+      return;
+    }
+
+    if (!isPlainObject(data) || data.type !== "deck" || !Array.isArray(data.main) || !Array.isArray(data.evolve)) {
+      throw new Error("一人回しツールのセーブデータ、deckview HTML、または旧デッキ作成ツール形式JSONを選択してください。");
+    }
+
+    els.deckTitleInput.value = safeStringValue(data.title, "");
+    state.deck.main = await normalizeImportedDeckList(data.main, "main");
+    state.deck.evolve = await normalizeImportedDeckList(data.evolve, "evolve");
+    state.deck.other = await normalizeImportedDeckList(data.other || data.extra || [], "other");
+    render();
+  }
+
+  async function normalizeImportedDeckList(list, zone) {
+    const normalized = [];
+    for (const card of Array.isArray(list) ? list : []) {
+      if (!isPlainObject(card) || !getCardImage(card)) continue;
+      const next = {
+        id:normalizeImportedText(card.id) || makeId(zone),
+        name:normalizeImportedText(card.name, "カード名未設定") || "カード名未設定",
+        count:clampCount(zone, Number(card.count ?? card.qty ?? 1)) || 1,
+        imageHash:normalizeImportedText(card.imageHash),
+        imageSrc:normalizeImageSrc(card.imageSrc || card.img || card.url || ""),
+        sourceType:inferSourceType(card),
+        note:safeStringValue(card.note, ""),
+        createdAt:normalizeImportedText(card.createdAt) || nowIso(),
+        updatedAt:nowIso()
+      };
+      await ensureCardHash(next);
+      normalized.push(next);
+    }
+    return normalized;
+  }
+
+  async function importStorageData(data) {
+    if (!isPlainObject(data) || data.type !== "storage" || !isPlainObject(data.classes)) {
+      throw new Error("ストレージデータの形式が違います。");
+    }
+
+    let added = 0;
+    for (const className of STORAGE_CLASSES) {
+      const cards = Array.isArray(data.classes[className]) ? data.classes[className] : [];
+      for (const card of cards) {
+        if (!isPlainObject(card) || !getCardImage(card)) continue;
+        const normalized = {
+          id:normalizeImportedText(card.id) || makeId("storage"),
+          name:normalizeImportedText(card.name, "カード名未設定") || "カード名未設定",
+          className,
+          imageHash:normalizeImportedText(card.imageHash),
+          imageSrc:normalizeImageSrc(card.imageSrc || card.img || card.url || ""),
+          sourceType:inferSourceType(card),
+          memo:safeStringValue(card.memo, ""),
+          tags:normalizeImportedTags(card.tags),
+          createdAt:normalizeImportedText(card.createdAt) || nowIso(),
+          updatedAt:nowIso()
+        };
+        await ensureCardHash(normalized);
+        if (addCardToStorage(className, normalized)) added += 1;
+      }
+    }
+
+    render();
+    alert(`ストレージへ未登録カードを${added}種類追加しました。`);
+  }
+
+  async function readDeckImportFile(file) {
+    const text = await file.text();
+    const parsed = safeJsonParse(text, null);
+    return parsed === null ? text : parsed;
+  }
+
+  async function readJsonFile(file) {
+    const text = await file.text();
+    const parsed = safeJsonParse(text, null);
+    if (!isPlainObject(parsed)) throw new Error("JSONファイルの形式が違います。オブジェクト形式のバックアップを選択してください。");
+    return parsed;
+  }
+
+  function setupEvents() {
+    els.infoToggleBtn.addEventListener("click", () => {
+      const collapsed = els.infoPanel.classList.toggle("collapsed");
+      els.infoToggleBtn.textContent = collapsed ? "展開" : "閉じる";
+    });
+
+    document.getElementById("exportSoloDeckBtn").addEventListener("click", () => {
+      exportJson(makeSaveDataFilename(), buildSoloBackupSaveData());
+    });
+
+    if (els.openDeckListBtn) els.openDeckListBtn.addEventListener("click", openDeckListModal);
+    els.closeDeckListBtn.addEventListener("click", closeDeckListModal);
+    els.deckListModal.addEventListener("click", event => {
+      if (event.target === els.deckListModal) closeDeckListModal();
+    });
+    els.createDeckFromListBtn.addEventListener("click", createNewDeckFromList);
+    els.saveCurrentDeckBtn.addEventListener("click", () => {
+      const name = saveCurrentDeckToSoloList();
+      alert(`デッキ「${name}」をデッキリストに保存しました。`);
+      render();
+    });
+
+    els.skipStartupBtn.addEventListener("click", closeStartupModal);
+    els.startupModal.addEventListener("click", event => {
+      if (event.target === els.startupModal) closeStartupModal();
+    });
+
+    document.getElementById("exportStorageBtn").addEventListener("click", () => {
+      exportJson(makeCardStorageFilename(), buildStorageSaveData());
+    });
+
+    async function handleDeckListFileInput(event, options = {}) {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        await importDeckData(await readDeckImportFile(file));
+        if (options.closeStartup) closeStartupModal();
+        if (options.openList) openDeckListModal();
+      } catch (error) {
+        alert(error.message);
+      }
+      event.target.value = "";
+    }
+
+    els.importDeckInput.addEventListener("change", event => handleDeckListFileInput(event, {openList:true}));
+    els.startupImportInput.addEventListener("change", event => handleDeckListFileInput(event, {closeStartup:true, openList:true}));
+    if (els.deckListImportInput) els.deckListImportInput.addEventListener("change", event => handleDeckListFileInput(event, {openList:true}));
+
+    els.importBookmarkletHtmlBtn.addEventListener("click", async () => {
+      const raw = els.bookmarkletHtmlInput.value.trim();
+      if (!raw) {
+        alert("ブックマークレットで取得したdeckview HTMLを貼り付けてください。");
+        return;
+      }
+      try {
+        if (looksLikeSoloToolAppHtml(raw)) {
+          throw new Error("このHTMLは直接読み込めません。ブックマークレットで取得したdeckview HTML、または一人回しセーブデータJSONを使ってください。");
+        }
+        const deckviewHtml = extractDeckviewOuterHtml(raw) || raw;
+        const title = prompt("新規デッキ名を入力してください", els.deckTitleInput.value.trim() || "貼り付けデッキ") || "貼り付けデッキ";
+        await importSoloDeckHtmlData(deckviewHtml, title);
+        ensureSoloBackupContext();
+        alert(`貼り付けHTMLを「${title}」としてデッキ化しました。保存するとデッキリスト内に追加・更新されます。`);
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    els.importStorageInput.addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        await importStorageData(await readJsonFile(file));
+      } catch (error) {
+        alert(error.message);
+      }
+      event.target.value = "";
+    });
+
+    els.closeStorageBtn.addEventListener("click", closeStorageModal);
+    els.storageModal.addEventListener("click", event => {
+      if (event.target === els.storageModal) closeStorageModal();
+    });
+
+    els.storageSearchInput.addEventListener("input", renderStorageModal);
+    els.saveDeckToCurrentClassBtn.addEventListener("click", () => {
+      if (!state.activeStorageClass) return;
+      addDeckToStorage(state.activeStorageClass);
+    });
+
+    document.getElementById("closeEditBtn").addEventListener("click", closeEditModal);
+    document.getElementById("saveEditingCardBtn").addEventListener("click", saveEditingCard);
+    document.getElementById("deleteEditingCardBtn").addEventListener("click", deleteEditingCard);
+
+    els.editModal.addEventListener("click", event => {
+      if (event.target === els.editModal) closeEditModal();
+    });
+  }
+
+  function initClassSelectOptions() {
+    els.editClassSelect.innerHTML = "";
+
+    STORAGE_CLASSES.forEach(className => {
+      const editOption = document.createElement("option");
+      editOption.value = className;
+      editOption.textContent = className;
+      els.editClassSelect.appendChild(editOption);
+    });
+  }
+
+  function init() {
+    initClassSelectOptions();
+    setupDropAreas();
+    setupStorageModalDrop();
+    setupEvents();
+
+    if (window.matchMedia("(max-width:700px)").matches) {
+      els.infoPanel.classList.add("collapsed");
+      els.infoToggleBtn.textContent = "展開";
+    }
+
+    render();
+    openStartupModal();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
